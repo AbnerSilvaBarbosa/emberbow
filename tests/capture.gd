@@ -84,7 +84,7 @@ func capture() -> void:
 	game.toggle_pause()
 	await save("pause")
 	game.menu.hide()
-	for index in range(1, 6):
+	for index in range(1, game.MAPS.size()):
 		game.build_map(index)
 		for p in game.players.values():
 			p.position = game.spawn_point(p.slot)

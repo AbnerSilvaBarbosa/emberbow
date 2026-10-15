@@ -7,8 +7,8 @@ func draw(c: CanvasItem, index: int, t: float) -> void:
 	if cached_index != index:
 		cached_index = index
 		grid = Layouts.cells(index)
-	var garden := index in [0, 2]
-	var ember := index == 1
+	var garden := index % 6 in [0, 2]
+	var ember := index % 6 == 1
 	var edge := Color("a9b971") if garden else (Color("be996d") if ember else Color("8bb9cc"))
 	var mid := Color("657b38") if garden else (Color("735844") if ember else Color("285c83"))
 	var dark := Color("0a180d") if garden else Color("090e24")

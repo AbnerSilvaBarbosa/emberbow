@@ -7,7 +7,7 @@ const Interface = preload("res://scripts/interface.gd")
 const Archer = preload("res://scripts/player.gd")
 const PORT := 24680
 const COLORS := [Color("65e0b6"), Color("ffb55c"), Color("c8a0fa"), Color("ed748b")]
-const MAPS := ["Ruínas da Aurora", "Forja Suspensa", "Jardim Lunar", "Abismo Astral", "Torres Gêmeas", "Coroa Partida"]
+const MAPS := ["Ruínas da Aurora", "Forja Suspensa", "Jardim Lunar", "Abismo Astral", "Torres Gêmeas", "Coroa Partida", "Pátio Cruzado", "Forja em Zigue-zague", "Jardim das Ilhas", "Galerias do Abismo", "Pontes Gêmeas", "Coroa Dividida"]
 var art := Art.new()
 var ui: CanvasLayer
 var selected_skin := 0
@@ -18,7 +18,9 @@ var hitstop := 0.0
 var camera: Camera2D
 var mouse_aim_until := 0
 const SCORE_TIME := 3.4
-const REPLAY_TIME := 2.0
+const REPLAY_TIME := 4.6
+const DEATH_HOLD := 0.7
+const REWIND_TIME := 0.7
 var replay_frames: Array = []
 var round_number := 0
 var bot_jump_until := 0
@@ -66,7 +68,7 @@ func _ready() -> void:
 	build_map(0)
 	build_ui()
 	Input.joy_connection_changed.connect(controller_connection_changed)
-	for key in ["shoot", "catch", "jump", "dash", "hit", "blast", "ui"]:
+	for key in ["shoot", "catch", "jump", "dash", "hit", "blast", "ui", "death"]:
 		var player := AudioStreamPlayer.new()
 		player.stream = load("res://audio/" + key + ".wav")
 		player.volume_db = -15
@@ -241,6 +243,7 @@ func reset_round() -> void:
 	for p in players.values():
 		p.round_start_score = p.score
 		p.alive = true
+		p.death_age = 10
 		p.arrows = 3
 		p.special = 0
 		p.position = spawn_point(p.slot)
@@ -364,11 +367,10 @@ func _physics_process(dt: float) -> void:
 					if p.alive and (p.position.x < inset or p.position.x > 960 - inset): kill(p.pid, 0)
 			var living := players.values().filter(func(p): return p.alive)
 			record_replay()
-			if living.size() <= 1: next_round = SCORE_TIME + REPLAY_TIME
-			for p in players.values():
-				if p.score >= 10:
-					winner = p.pid
-					next_round = SCORE_TIME + REPLAY_TIME
+			if living.size() <= 1:
+				next_round = SCORE_TIME + REPLAY_TIME
+				for p in players.values():
+					if p.score >= 10: winner = p.pid
 	if multiplayer.is_server() and mode != "menu":
 		net_clock += dt
 		if net_clock >= 1.0 / 30:
@@ -384,9 +386,19 @@ func record_replay() -> void:
 	replay_frames.append({"time": round_time, "actors": actors, "arrows": projectiles.duplicate(true), "effects": particle_events.duplicate(true)})
 	while replay_frames.size() > 1 and round_time - replay_frames[0].time > 1.5: replay_frames.pop_front()
 
+func replay_elapsed() -> float:
+	return clampf(SCORE_TIME + REPLAY_TIME - next_round, 0, REPLAY_TIME)
+
+func replay_progress() -> float:
+	var elapsed := replay_elapsed()
+	if elapsed < DEATH_HOLD: return 1.0
+	if elapsed < DEATH_HOLD + REWIND_TIME:
+		return 1.0 - (elapsed - DEATH_HOLD) / REWIND_TIME
+	return clampf((elapsed - DEATH_HOLD - REWIND_TIME) / 2.8, 0, 1)
+
 func replay_frame() -> Dictionary:
 	if replay_frames.is_empty(): return {}
-	var progress := clampf((SCORE_TIME + REPLAY_TIME - next_round) / REPLAY_TIME, 0, 1)
+	var progress := replay_progress()
 	var target: float = lerpf(replay_frames[0].time, replay_frames[-1].time, progress)
 	var result: Dictionary = replay_frames[0]
 	for frame in replay_frames:
@@ -495,11 +507,13 @@ func kill(victim: int, attacker: int) -> void:
 	if not players.has(victim) or not players[victim].alive: return
 	var p: Node = players[victim]
 	p.alive = false
+	p.begin_death()
+	sound("death")
 	if players.has(attacker):
 		players[attacker].score = maxi(0, players[attacker].score + (1 if attacker != victim else -1))
 	effect(p.position, p.tint, "hit")
-	shake = 3.2
-	hitstop = 0.055
+	shake = 8.0
+	hitstop = 0.09
 	# Eliminated archers drop their remaining ammunition.
 	for i in p.inventory.size():
 		arrow_id += 1
@@ -548,6 +562,7 @@ func snapshot(state: Array, arrows_state: Array, item_state: Array, phase: Strin
 		p.position = data.p
 		p.visual_offset = old_visual - p.position if old_visual.distance_to(p.position) < 140 else Vector2.ZERO
 		p.velocity = data.v
+		if p.alive and not data.alive: p.begin_death()
 		p.alive = data.alive
 		p.arrows = data.arrows
 		p.score = data.score
@@ -583,7 +598,8 @@ func snapshot(state: Array, arrows_state: Array, item_state: Array, phase: Strin
 			seen_event = event.seq
 			particle_events.append(event)
 			sound(event.key)
-			if event.key in ["hit", "blast"]: shake = 3.2
+			if event.key in ["hit", "blast"]: shake = 8.0
+			if event.key == "hit": sound("death")
 
 func update_hud() -> void:
 	pass # Interface owns HUD state and typography.

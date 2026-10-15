@@ -18,6 +18,7 @@ var arrows: int:
 var score := 0
 var round_start_score := 0
 var alive := true
+var death_age := 10.0
 var facing := 1.0
 var aim := Vector2.RIGHT
 var dash := 0.0
@@ -58,6 +59,7 @@ func _ready() -> void:
 
 func _process(dt: float) -> void:
 	anim_time += dt
+	death_age += dt
 	visual_offset = visual_offset.lerp(Vector2.ZERO, 1.0 - exp(-22.0 * dt))
 	squash = squash.lerp(Vector2.ONE, 1.0 - exp(-16.0 * dt))
 	for ghost in trail: ghost.life -= dt
@@ -174,8 +176,26 @@ func correct_corners(dt: float) -> void:
 			global_position += offset
 			return
 
+func begin_death() -> void:
+	death_age = 0
+	charge = 0
+	trail.clear()
+	var local := arena.multiplayer.multiplayer_peer is OfflineMultiplayerPeer or pid == arena.multiplayer.get_unique_id()
+	if local:
+		var device: int = arena.Gamepad.device_for(Array(Input.get_connected_joypads()), arena.local_two, pid == -1)
+		if device >= 0: Input.start_joy_vibration(device, 0.55, 0.85, 0.22)
+
 func _draw() -> void:
-	if arena == null or not alive: return
+	if arena == null: return
+	if not alive:
+		if death_age < 0.8:
+			var t := death_age
+			var offset := Vector2(facing * t * 45, -100 * t + 160 * t * t)
+			draw_set_transform(offset, facing * t * 5, Vector2(1.1, 0.8))
+			draw_texture_rect(arena.art.sprite(skin, false, 0), Rect2(-16, -43, 32, 56), false, Color(1, 1, 1, 1.0 - t / 0.8))
+			draw_set_transform(Vector2.ZERO)
+			if t < 0.12: draw_circle(Vector2.ZERO, 18, Color(1, 0.95, 0.8, (1 - t / 0.12) * 0.65))
+		return
 	var art = arena.art
 	var moving := absf(velocity.x) > 20
 	var texture: Texture2D = art.sprite(skin, moving, anim_time)

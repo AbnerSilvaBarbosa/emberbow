@@ -18,7 +18,7 @@ Demonstração roteirizada, renderizada pelo próprio Godot. Mostra entrada da r
 
 ## O que já funciona
 
-- Quatro personagens selecionáveis e seis arenas com rotas diferentes.
+- Quatro personagens selecionáveis e doze arenas com rotas diferentes.
 - Combate sem HUD permanente: o inventário fica sobre cada personagem.
 - Um acerto elimina. Saltar sobre o adversário também elimina e rebate o atacante.
 - Pulo variável, buffer de pulo e tolerância curta após sair da plataforma.
@@ -69,10 +69,12 @@ Selecione o arqueiro e a arena no menu antes de começar.
 2. A contagem termina e o combate começa, sem placar ocupando a tela.
 3. Cada eliminação soma um ponto ao atacante. Autoeliminação tira um ponto, sem total negativo.
 4. A rodada termina quando resta no máximo um jogador vivo.
-5. Um replay visual de dois segundos reapresenta até 1,5 segundo da jogada final. Depois, cada retrato aparece ao lado de dez moedas: elas são preenchidas ou removidas uma a uma conforme os pontos ganhos ou perdidos.
+5. A morte tem animação, som e impacto na câmera. Quando sobra um jogador ou nenhum, a arena escurece durante 0,7 s, rebobina durante 0,7 s e reapresenta até 1,5 s da jogada final em câmera lenta. Depois, cada retrato aparece ao lado de dez moedas: elas são preenchidas ou removidas uma a uma conforme os pontos ganhos ou perdidos.
 6. Após os 3,4 segundos do placar, começa a próxima rodada. Ao chegar a dez pontos, aparece o resultado final.
 
 Após 40 segundos de combate, uma névoa fecha as laterais para evitar impasses.
+
+![Rebobinada antes da câmera lenta](docs/death-rewind.png)
 
 ![Placar entre rodadas](docs/round-score.png)
 
@@ -136,10 +138,22 @@ Capacidade máxima: **seis flechas**. A próxima fica sublinhada. Coleta e captu
 | Abismo Astral | Eixo central e circuitos laterais |
 | Torres Gêmeas | Pedra azul, duas torres e rotas inferiores |
 | Coroa Partida | Cripta com plataformas centrais adicionais |
+| Pátio Cruzado | Ruínas verdes com pilares e rotas cruzadas |
+| Forja em Zigue-zague | Patamares alternados entre os lados |
+| Jardim das Ilhas | Pequenas ilhas e caminhos verticais |
+| Galerias do Abismo | Corredores em volta de paredes altas |
+| Pontes Gêmeas | Pontes largas e apoio central |
+| Coroa Dividida | Dois pares de balcões em gancho |
 
 O desenho e a colisão compartilham uma grade de 24 px. Pedra com contorno claro é sólida; paredes decorativas ao fundo não bloqueiam o movimento. As aberturas nas bordas permitem circular entre extremos.
 
 ![Fortaleza de pedra azul](docs/arena-4.png)
+
+### Mesmo ambiente, rotas diferentes
+
+![Forja em Zigue-zague](docs/arena-7.png)
+
+![Jardim das Ilhas](docs/arena-8.png)
 
 ## Jogar online
 
@@ -163,7 +177,7 @@ scripts/
   main.gd           Simulação, combate, rodadas e rede
   player.gd         Movimento, inventário e apresentação do arqueiro
   gamepad.gd        Mapeamento e atribuição de controles
-  arena_layouts.gd  Geometria das seis arenas e pontos de nascimento
+  arena_layouts.gd  Geometria das doze arenas e pontos de nascimento
   arena_world.gd    Desenho do cenário em pixel art
   art.gd            Sprites, efeitos e composição visual
   interface.gd      Menus e transições de rodada
@@ -190,12 +204,13 @@ godot --headless --path . --script tests/wall_pickup.gd
 godot --headless --path . --script tests/round_flow.gd
 godot --headless --path . --script tests/corners.gd
 godot --headless --path . --script tests/replay_ballistics.gd
+godot --headless --path . --script tests/death_sequence.gd
 godot --headless --path . --script tests/gamepad.gd
 godot --headless --path . --script tests/ui_click.gd
 python3 tests/network.py /caminho/para/godot
 ```
 
-**Validação registrada:** 111 verificações de mecânicas/controle, clique de interface e host + três clientes ENet em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
+**Validação registrada:** 165 verificações de mecânicas/controle, clique de interface e host + três clientes ENet em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
 
 Não validados: internet pública, perda/jitter, controles físicos, builds exportadas e balanceamento prolongado.
 
@@ -221,3 +236,5 @@ As capturas usam uma cena de demonstração para apresentar inventários e resul
 As licenças de terceiros estão preservadas em `assets/licenses/`. Nenhuma licença geral de redistribuição foi definida para o código autoral neste repositório.
 
 O replay é uma reprodução visual do histórico local, também nos clientes online; não recalcula dano e não é rollback de rede. O vídeo demonstrativo acima foi gravado antes da atualização de moedas/replay; as capturas estáticas mostram o placar atual.
+
+A vibração do controle acompanha a morte do jogador local quando o dispositivo suporta rumble. Sua intensidade física ainda não foi validada em hardware.

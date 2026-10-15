@@ -24,3 +24,7 @@ Doze verificações adicionais em `tests/gamepad.gd` passaram: atribuição sem/
 ## Moedas, balística e replay
 
 Seis verificações adicionais passaram em `tests/replay_ballistics.gd`: subida/queda natural, autoeliminação com perda de ponto, histórico limitado, avanço do replay, ausência de mutação de pontuação e limpeza entre rodadas. Combate, inventário/wrap e fluxo de rodadas foram revalidados. O teste ENet agora encerra uma rodada e exige replay disponível no host e nos três clientes: todos passaram. Capturas `round-score.png` e `round-replay.png` conferidas. O replay utiliza estados visuais locais; não sincroniza um arquivo de replay completo e não implementa rollback.
+
+## Impacto de morte e novos layouts
+
+Seis testes de `death_sequence.gd` passaram, cobrindo animação/impacto, permanência de dois sobreviventes mesmo após dez pontos, início apenas ao restar um, pausa final, rebobinada e reprodução lenta. Combate, balística e fluxo foram revalidados; quatro processos ENet passaram. Há doze layouts; spawns e passagens entre bordas testados em todos. Capturas de impacto/rebobinada/câmera lenta conferidas; intensidade de som e rumble requer playtest físico.

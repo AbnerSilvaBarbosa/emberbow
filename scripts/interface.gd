@@ -213,7 +213,7 @@ func change_map(direction: int) -> void:
 	game.map_select.select(index)
 	if game.mode == "menu": game.build_map(index)
 	preview_title.text = game.MAPS[index]
-	preview_description.text = DESCRIPTIONS[index]
+	preview_description.text = DESCRIPTIONS[index % DESCRIPTIONS.size()]
 	preview.queue_redraw()
 
 func draw_preview() -> void:
@@ -413,11 +413,21 @@ func draw_hud() -> void:
 	health.draw_rect(Rect2(340, 491, 280 * clampf(game.next_round / 3.4, 0, 1), 3), GOLD)
 
 func draw_replay() -> void:
+	var elapsed: float = game.replay_elapsed()
+	if elapsed < game.DEATH_HOLD:
+		health.draw_rect(Rect2(0, 0, 960, 600), Color(0.01, 0.02, 0.05, 0.5 * elapsed / game.DEATH_HOLD))
+		return
+	var rewinding: bool = elapsed < game.DEATH_HOLD + game.REWIND_TIME
 	var frame: Dictionary = game.replay_frame()
 	game.art.draw_scenery(health, game.map_id, game.visual_time)
 	if not frame.is_empty():
 		for p in frame.actors:
-			if not p.alive: continue
+			if not p.alive:
+				var t: float = clampf(elapsed - game.DEATH_HOLD - game.REWIND_TIME - 2.7, 0, 0.8)
+				health.draw_set_transform(p.p + Vector2(p.facing * t * 45, -100 * t + 160 * t * t), p.facing * t * 5)
+				health.draw_texture_rect(game.art.sprite(p.skin, false, 0), Rect2(-16, -43, 32, 56), false, Color(1, 1, 1, 1 - t / 0.8))
+				health.draw_set_transform(Vector2.ZERO)
+				continue
 			health.draw_set_transform(p.p, 0, Vector2(p.facing, 1))
 			health.draw_texture_rect(game.art.sprite(p.skin, absf(p.v.x) > 20, frame.time), Rect2(-16, -43, 32, 56), false)
 			health.draw_set_transform(Vector2.ZERO)
@@ -428,4 +438,8 @@ func draw_replay() -> void:
 		for effect in frame.effects:
 			if effect.key == "hit": health.draw_arc(effect.p, 24, 0, TAU, 16, effect.c, 3)
 	health.draw_rect(Rect2(0, 0, 960, 42), Color(0.02, 0.03, 0.06, 0.85))
-	centered("REPLAY · JOGADA FINAL", 29, 19, GOLD)
+	health.draw_rect(Rect2(0, 42, 960, 558), Color(0.02, 0.03, 0.1, 0.28 if rewinding else 0.12))
+	if rewinding:
+		for y in range(46, 600, 12):
+			health.draw_rect(Rect2(0, y + int(elapsed * 55) % 12, 960, 2), Color(0.65, 0.8, 1, 0.12))
+	centered("REBOBINANDO" if rewinding else "REPLAY · CÂMERA LENTA", 29, 19, GOLD)

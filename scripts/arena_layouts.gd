@@ -21,7 +21,7 @@ static func cells(index: int) -> Dictionary:
 	pair.call(0, 20, 3, 3)
 	pair.call(0, 23, 18, 2)
 	pair.call(3, 22, 6, 1)
-	match index:
+	match index % 6:
 		0, 2:
 			# Garden: upper chambers, side niches, stepped bowl, a split obelisk.
 			pair.call(5, 2, 3, 2)
@@ -33,7 +33,7 @@ static func cells(index: int) -> Dictionary:
 			pair.call(3, 19, 3, 1)
 			put.call(19, 12, 2, 5)
 			put.call(17, 17, 6, 1)
-			if index == 2:
+			if index % 6 == 2:
 				pair.call(11, 8, 3, 1)
 				pair.call(12, 20, 3, 2)
 			else:
@@ -50,7 +50,7 @@ static func cells(index: int) -> Dictionary:
 			pair.call(12, 18, 4, 2)
 			pair.call(12, 22, 6, 2)
 			put.call(19, 3, 2, 3)
-			if index == 1:
+			if index % 6 == 1:
 				put.call(19, 15, 2, 3)
 			else:
 				put.call(19, 20, 2, 2)
@@ -66,7 +66,50 @@ static func cells(index: int) -> Dictionary:
 			put.call(19, 9, 2, 2)
 			put.call(19, 17, 2, 4)
 			pair.call(14, 20, 2, 3)
-			if index == 5: pair.call(12, 13, 3, 2)
+			if index % 6 == 5: pair.call(12, 13, 3, 2)
+	if index >= 6:
+		# Keep the theme's outer shell but replace all interior routes.
+		for cell: Vector2i in grid.keys():
+			if cell.x >= 5 and cell.x < 35 and cell.y >= 4 and cell.y < 22:
+				grid.erase(cell)
+		match index % 6:
+			0:
+				pair.call(8, 7, 6, 1)
+				pair.call(12, 12, 2, 5)
+				pair.call(6, 17, 8, 1)
+				put.call(17, 10, 6, 1)
+				put.call(18, 20, 4, 1)
+			1:
+				put.call(7, 7, 10, 1)
+				put.call(23, 10, 10, 1)
+				put.call(7, 14, 10, 1)
+				put.call(23, 18, 10, 1)
+				put.call(18, 21, 4, 1)
+			2:
+				pair.call(8, 7, 3, 2)
+				pair.call(13, 12, 3, 2)
+				pair.call(7, 17, 3, 2)
+				pair.call(14, 21, 3, 1)
+				put.call(19, 6, 2, 1)
+				put.call(19, 17, 2, 1)
+			3:
+				pair.call(9, 6, 2, 5)
+				pair.call(5, 11, 6, 1)
+				pair.call(14, 16, 2, 5)
+				pair.call(9, 21, 7, 1)
+				put.call(17, 9, 6, 1)
+			4:
+				pair.call(10, 5, 2, 4)
+				pair.call(7, 9, 9, 1)
+				pair.call(5, 14, 4, 1)
+				pair.call(11, 19, 7, 1)
+				put.call(18, 14, 4, 2)
+			5:
+				pair.call(5, 6, 9, 1)
+				pair.call(12, 7, 2, 4)
+				pair.call(5, 16, 9, 1)
+				pair.call(12, 17, 2, 4)
+				put.call(18, 12, 4, 2)
 	return grid
 
 static func rectangles(index: int) -> Array[Rect2]:

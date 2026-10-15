@@ -30,7 +30,7 @@ func run() -> void:
 	check(turned, "Upward arrow reaches apex and falls")
 	check(not p.alive and p.score == 1, "Returning own arrow kills shooter and removes one point")
 	check(game.replay_frames.size() <= 92, "Replay history stays bounded to 1.5 seconds")
-	game.next_round = game.SCORE_TIME + game.REPLAY_TIME
+	game.next_round = game.SCORE_TIME + game.REPLAY_TIME - game.DEATH_HOLD - game.REWIND_TIME
 	var first: Dictionary = game.replay_frame()
 	game.next_round = game.SCORE_TIME + 0.01
 	var last: Dictionary = game.replay_frame()
