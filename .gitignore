@@ -1,0 +1,10 @@
+.godot/
+build/
+.DS_Store
+
+.tools/
+
+.env
+.env.*
+!.env.example
+*.avi
