@@ -64,6 +64,12 @@ func capture() -> void:
 	game.queue_redraw()
 	await create_timer(0.1).timeout
 	await save("arena")
+	game.record_replay()
+	game.round_time += 0.1
+	game.record_replay()
+	game.next_round = game.SCORE_TIME + 1
+	await save("round-replay")
+	game.next_round = 0
 	game.round_time = 0
 	game.next_round = 1.5
 	await save("round-intro")

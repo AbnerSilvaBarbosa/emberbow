@@ -25,7 +25,7 @@ func run() -> void:
 	game.ui._process(0)
 	check(game.next_round > 3 and p.score - p.round_start_score == 1 and game.ui.health.visible, "Elimination displays round gain before reset")
 	var number: int = game.round_number
-	game._physics_process(3.5)
+	game._physics_process(5.5)
 	check(game.round_number == number + 1 and p.alive and q.alive and p.round_start_score == p.score, "Next round starts automatically and preserves totals")
 	p.score = 2
 	game.reset_round()
@@ -42,7 +42,7 @@ func run() -> void:
 	game.hitstop = 0
 	game._physics_process(0.016)
 	check(game.mode == "playing" and game.winner == p.pid and game.next_round > 0, "Winning point still shows the round breakdown")
-	game._physics_process(3.5)
+	game._physics_process(5.5)
 	check(game.mode == "finished", "Final results follow the breakdown")
 	for index in 6:
 		game.build_map(index)

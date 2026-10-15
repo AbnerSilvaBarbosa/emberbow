@@ -20,3 +20,7 @@ A nova composição usa uma grade de 24 px para desenho e colisão. Capturas atu
 ## Controle
 
 Doze verificações adicionais em `tests/gamepad.gd` passaram: atribuição sem/um/dois controles, deadzone, mira independente, botões, gatilho, D-pad, confirmação de menu por evento de controle, pausa/retomada e desconexão. Mecânicas existentes e clique de mouse foram revalidados. Os testes usam dados e eventos sintetizados, sem controle físico conectado; compatibilidade de modelos e Bluetooth/USB ainda depende de validação física.
+
+## Moedas, balística e replay
+
+Seis verificações adicionais passaram em `tests/replay_ballistics.gd`: subida/queda natural, autoeliminação com perda de ponto, histórico limitado, avanço do replay, ausência de mutação de pontuação e limpeza entre rodadas. Combate, inventário/wrap e fluxo de rodadas foram revalidados. O teste ENet agora encerra uma rodada e exige replay disponível no host e nos três clientes: todos passaram. Capturas `round-score.png` e `round-replay.png` conferidas. O replay utiliza estados visuais locais; não sincroniza um arquivo de replay completo e não implementa rollback.

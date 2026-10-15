@@ -69,8 +69,8 @@ Selecione o arqueiro e a arena no menu antes de começar.
 2. A contagem termina e o combate começa, sem placar ocupando a tela.
 3. Cada eliminação soma um ponto ao atacante. Autoeliminação tira um ponto, sem total negativo.
 4. A rodada termina quando resta no máximo um jogador vivo.
-5. O placar mostra o saldo de cada um (`+1`, `−1`, `0` etc.) e a mudança do total.
-6. Após 3,4 segundos, começa a próxima rodada. Ao chegar a dez pontos, aparece o resultado final.
+5. Um replay visual de dois segundos reapresenta até 1,5 segundo da jogada final. Depois, cada retrato aparece ao lado de dez moedas: elas são preenchidas ou removidas uma a uma conforme os pontos ganhos ou perdidos.
+6. Após os 3,4 segundos do placar, começa a próxima rodada. Ao chegar a dez pontos, aparece o resultado final.
 
 Após 40 segundos de combate, uma névoa fecha as laterais para evitar impasses.
 
@@ -121,6 +121,8 @@ Desconectar um controle abre o menu. No jogo local, isso pausa; online, os demai
 | Normal | Haste clara | Para no cenário; pode ser recolhida |
 | Perfurante | Ponta triangular roxa | Atravessa o cenário |
 | Explosiva | Bomba laranja | Detona sob comando; pode atingir o próprio dono |
+
+As flechas têm gravidade: o disparo perde altura ao longo do voo. Uma flecha atirada para cima pode cair sobre o próprio dono e eliminá-lo, descontando um ponto (mínimo zero). O dash ainda pode capturá-la.
 
 Capacidade máxima: **seis flechas**. A próxima fica sublinhada. Coleta e captura preservam o tipo; baús dão duas especiais. Encoste em uma flecha parada para recolhê-la, se houver espaço. Jogadores eliminados deixam a munição restante.
 
@@ -187,12 +189,13 @@ godot --headless --path . --script tests/inventory_wrap.gd
 godot --headless --path . --script tests/wall_pickup.gd
 godot --headless --path . --script tests/round_flow.gd
 godot --headless --path . --script tests/corners.gd
+godot --headless --path . --script tests/replay_ballistics.gd
 godot --headless --path . --script tests/gamepad.gd
 godot --headless --path . --script tests/ui_click.gd
 python3 tests/network.py /caminho/para/godot
 ```
 
-**Validação registrada:** 105 verificações de mecânicas/controle, clique de interface e host + três clientes ENet em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
+**Validação registrada:** 111 verificações de mecânicas/controle, clique de interface e host + três clientes ENet em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
 
 Não validados: internet pública, perda/jitter, controles físicos, builds exportadas e balanceamento prolongado.
 
@@ -216,3 +219,5 @@ As capturas usam uma cena de demonstração para apresentar inventários e resul
 [Créditos e licenças dos assets](assets/licenses/CREDITS.md) · [Pesquisa do jogo](docs/RESEARCH.md) · [Código aberto estudado](docs/OPEN_SOURCE.md) · [Direção visual](DESIGN.md)
 
 As licenças de terceiros estão preservadas em `assets/licenses/`. Nenhuma licença geral de redistribuição foi definida para o código autoral neste repositório.
+
+O replay é uma reprodução visual do histórico local, também nos clientes online; não recalcula dano e não é rollback de rede. O vídeo demonstrativo acima foi gravado antes da atualização de moedas/replay; as capturas estáticas mostram o placar atual.

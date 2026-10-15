@@ -7,6 +7,8 @@ var moved := false
 var appearance := false
 var mixed_inventory := false
 var finishing := false
+var ended_round := false
+var replay_seen := false
 var initial_x := -10000.0
 
 func _initialize() -> void:
@@ -25,6 +27,10 @@ func _process(dt: float) -> bool:
 			for player in game.players.values(): player.collect_special(1)
 			started = true
 			print("HOST_STARTED")
+		if started and not ended_round and elapsed > 5.0:
+			for id in game.players:
+				if id != 1: game.kill(id, 1)
+			ended_round = true
 		if started:
 			for id in game.players:
 				if id > 1:
@@ -45,13 +51,14 @@ func _process(dt: float) -> bool:
 				if absf(p.position.x - initial_x) > 45: moved = true
 				if p.skin == 2: appearance = true
 				if p.inventory.has(0) and p.inventory.has(1): mixed_inventory = true
+	if game.next_round > game.SCORE_TIME and game.round_time > 0 and not game.replay_frames.is_empty(): replay_seen = true
 	if elapsed > (9.0 if host_side else 6.5):
 		finishing = true
-		if moved and appearance and mixed_inventory:
+		if moved and appearance and mixed_inventory and replay_seen:
 			print("NETWORK_PASS: ", "host" if host_side else "client")
 			finish.call_deferred(0)
 		else:
-			push_error("NETWORK_FAIL: movement=%s skin=%s inventory=%s" % [moved, appearance, mixed_inventory])
+			push_error("NETWORK_FAIL: movement=%s skin=%s inventory=%s replay=%s" % [moved, appearance, mixed_inventory, replay_seen])
 			finish.call_deferred(1)
 	return false
 

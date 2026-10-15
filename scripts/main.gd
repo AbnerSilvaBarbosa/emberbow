@@ -17,6 +17,9 @@ var shake := 0.0
 var hitstop := 0.0
 var camera: Camera2D
 var mouse_aim_until := 0
+const SCORE_TIME := 3.4
+const REPLAY_TIME := 2.0
+var replay_frames: Array = []
 var round_number := 0
 var bot_jump_until := 0
 var bot_shoot_until := 0
@@ -172,6 +175,7 @@ func join() -> void:
 	status.text = "Conectando a " + ip + "…"
 
 func leave(message: String) -> void:
+	replay_frames.clear()
 	if not multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -226,6 +230,7 @@ func start_match() -> void:
 	if multiplayer.has_multiplayer_peer(): broadcast()
 
 func reset_round() -> void:
+	replay_frames.clear()
 	round_number += 1
 	projectiles.clear()
 	pickups.clear()
@@ -358,11 +363,12 @@ func _physics_process(dt: float) -> void:
 				for p in players.values():
 					if p.alive and (p.position.x < inset or p.position.x > 960 - inset): kill(p.pid, 0)
 			var living := players.values().filter(func(p): return p.alive)
-			if living.size() <= 1: next_round = 3.4
+			record_replay()
+			if living.size() <= 1: next_round = SCORE_TIME + REPLAY_TIME
 			for p in players.values():
 				if p.score >= 10:
 					winner = p.pid
-					next_round = 3.4
+					next_round = SCORE_TIME + REPLAY_TIME
 	if multiplayer.is_server() and mode != "menu":
 		net_clock += dt
 		if net_clock >= 1.0 / 30:
@@ -370,6 +376,23 @@ func _physics_process(dt: float) -> void:
 			broadcast()
 	update_hud()
 	queue_redraw()
+
+func record_replay() -> void:
+	var actors: Array = []
+	for p in players.values():
+		actors.append({"p": p.position, "v": p.velocity, "alive": p.alive, "skin": p.skin, "facing": p.facing, "aim": p.aim, "tint": p.tint, "inventory": p.inventory.duplicate()})
+	replay_frames.append({"time": round_time, "actors": actors, "arrows": projectiles.duplicate(true), "effects": particle_events.duplicate(true)})
+	while replay_frames.size() > 1 and round_time - replay_frames[0].time > 1.5: replay_frames.pop_front()
+
+func replay_frame() -> Dictionary:
+	if replay_frames.is_empty(): return {}
+	var progress := clampf((SCORE_TIME + REPLAY_TIME - next_round) / REPLAY_TIME, 0, 1)
+	var target: float = lerpf(replay_frames[0].time, replay_frames[-1].time, progress)
+	var result: Dictionary = replay_frames[0]
+	for frame in replay_frames:
+		if frame.time > target: break
+		result = frame
+	return result
 
 func fire(p: Node, kind := -1) -> void:
 	arrow_id += 1
@@ -385,7 +408,7 @@ func update_arrows(dt: float) -> void:
 			continue
 		if not a.stuck:
 			var old: Vector2 = a.p
-			a.v.y += 95 * dt
+			a.v.y += 650 * dt
 			a.p += a.v * dt
 			a.p.x = wrapf(a.p.x, -16, 976)
 			if absf(a.p.x - old.x) > 500: old = a.p
@@ -545,8 +568,11 @@ func snapshot(state: Array, arrows_state: Array, item_state: Array, phase: Strin
 	projectiles = arrows_state
 	pickups = item_state
 	mode = phase
+	var was_live := next_round <= 0
+	if elapsed < round_time: replay_frames.clear()
 	round_time = elapsed
 	next_round = delay
+	if phase == "playing" and elapsed > 0 and (delay <= 0 or was_live): record_replay()
 	winner = winning
 	if phase == "playing" and menu.visible and notice != "paused": menu.hide()
 	if phase == "finished":

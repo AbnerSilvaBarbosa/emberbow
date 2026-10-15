@@ -379,26 +379,53 @@ func draw_hud() -> void:
 		centered("RODADA %d" % game.round_number, 258, 23, GOLD)
 		centered(str(ceili(game.next_round)), 327, 62, TEXT)
 		return
+	if game.next_round > game.SCORE_TIME:
+		draw_replay()
+		return
 	var entrance := clampf((3.4 - game.next_round) * 4, 0, 1)
 	health.draw_rect(Rect2(0, 0, 960, 600), Color(0.02, 0.03, 0.07, 0.73 * entrance))
-	centered("RODADA ENCERRADA", 164, 34, TEXT)
+	centered("RODADA ENCERRADA", 130, 34, TEXT)
 	var roster: Array = game.players.values()
 	roster.sort_custom(func(a, b): return a.slot < b.slot)
-	var width := 172.0
-	var start := (960 - roster.size() * width) / 2
+	var start_y := 232.0 - maxf(0, roster.size() - 2) * 15
+	var elapsed: float = game.SCORE_TIME - game.next_round
 	for i in roster.size():
 		var p: Node = roster[i]
-		var x: float = start + i * width
+		var y := start_y + i * 70
 		var delta: int = p.score - p.round_start_score
-		var color: Color = p.tint
-		health.draw_texture_rect(game.art.sprite(p.skin, false, game.visual_time), Rect2(x + 62, 185, 48, 84), false)
-		health.draw_string(game.art.body_font, Vector2(x + 32, 296), "P%d · %s" % [p.slot + 1, game.art.NAMES[p.skin]], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, color)
-		var change := "+%d" % delta if delta > 0 else str(delta)
-		var change_color := Color("86e6a4") if delta > 0 else (Color("ff8d82") if delta < 0 else MUTED)
-		health.draw_string(game.art.title_font, Vector2(x + 59, 343), change, HORIZONTAL_ALIGNMENT_LEFT, -1, 36, change_color)
-		health.draw_string(game.art.body_font, Vector2(x + 43, 377), "%d → %d" % [p.round_start_score, p.score], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, TEXT)
+		var steps := clampi(int(maxf(0, elapsed - 0.4) / 0.22), 0, absi(delta))
+		var shown: int = p.round_start_score + steps * signi(delta)
+		health.draw_texture_rect(game.art.sprite(p.skin, false, game.visual_time), Rect2(172, y - 44, 40, 70), false)
+		health.draw_string(game.art.body_font, Vector2(226, y - 2), "P%d · %s" % [p.slot + 1, game.art.NAMES[p.skin]], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, p.tint)
 		for point in 10:
-			var filled: bool = point < p.score
-			health.draw_rect(Rect2(x + 23 + point * 13, 400, 9, 9), color if filled else Color("34404f"))
+			var pos := Vector2(395 + point * 29, y - 10)
+			var filled := point < shown
+			var changed := point >= mini(p.score, p.round_start_score) and point < maxi(p.score, p.round_start_score)
+			var color := GOLD if filled else Color("39454d")
+			if changed and elapsed < 0.4: color = TEXT
+			health.draw_circle(pos + Vector2(0, 2), 10, Color("131a24"))
+			health.draw_circle(pos, 9, color)
+			health.draw_arc(pos, 6, 0, TAU, 12, Color("fff0ac") if filled else Color("65717a"), 1)
+			if filled: health.draw_line(pos + Vector2(0, -4), pos + Vector2(0, 4), Color("967035"), 2)
+		var change := "+%d" % delta if delta > 0 else str(delta)
+		health.draw_string(game.art.body_font, Vector2(703, y - 2), "%d/10  (%s)" % [shown, change], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, p.tint)
 	centered("PRÓXIMA RODADA" if game.winner == 0 else "PARTIDA ENCERRADA", 470, 18, GOLD)
 	health.draw_rect(Rect2(340, 491, 280 * clampf(game.next_round / 3.4, 0, 1), 3), GOLD)
+
+func draw_replay() -> void:
+	var frame: Dictionary = game.replay_frame()
+	game.art.draw_scenery(health, game.map_id, game.visual_time)
+	if not frame.is_empty():
+		for p in frame.actors:
+			if not p.alive: continue
+			health.draw_set_transform(p.p, 0, Vector2(p.facing, 1))
+			health.draw_texture_rect(game.art.sprite(p.skin, absf(p.v.x) > 20, frame.time), Rect2(-16, -43, 32, 56), false)
+			health.draw_set_transform(Vector2.ZERO)
+			health.draw_line(p.p + p.aim * 9, p.p + p.aim * 23, p.tint, 3)
+		for arrow in frame.arrows:
+			var color := TEXT if arrow.kind == 0 else (Color("c8a0fa") if arrow.kind == 1 else GOLD)
+			health.draw_line(arrow.p - arrow.v.normalized() * 12, arrow.p, color, 3)
+		for effect in frame.effects:
+			if effect.key == "hit": health.draw_arc(effect.p, 24, 0, TAU, 16, effect.c, 3)
+	health.draw_rect(Rect2(0, 0, 960, 42), Color(0.02, 0.03, 0.06, 0.85))
+	centered("REPLAY · JOGADA FINAL", 29, 19, GOLD)
