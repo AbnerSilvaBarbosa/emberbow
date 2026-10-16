@@ -1,5 +1,6 @@
 .godot/
 build/
+builds/
 .DS_Store
 
 .tools/

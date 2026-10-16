@@ -1,0 +1,30 @@
+[Unit]
+Description=Emberbow — arena online dedicada
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=emberbow
+Group=emberbow
+WorkingDirectory=/opt/emberbow/current
+ExecStart=/opt/emberbow/current/emberbow-server --headless -- --server --port=24680 --map=0
+Restart=on-failure
+RestartSec=3
+StateDirectory=emberbow
+Environment=XDG_DATA_HOME=/var/lib/emberbow/data
+Environment=XDG_CACHE_HOME=/var/lib/emberbow/cache
+Environment=GODOT_SILENCE_ROOT_WARNING=1
+MemoryMax=768M
+CPUQuota=100%
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/emberbow
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=emberbow
+
+[Install]
+WantedBy=multi-user.target

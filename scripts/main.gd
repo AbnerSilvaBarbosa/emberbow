@@ -21,6 +21,9 @@ const SCORE_TIME := 3.4
 const REPLAY_TIME := 4.6
 const DEATH_HOLD := 0.7
 const REWIND_TIME := 0.7
+# Dedicated server pacing: wait before starting, then before a rematch.
+const AUTO_START_DELAY := 4.0
+const AUTO_REMATCH_DELAY := 8.0
 var replay_frames: Array = []
 var round_number := 0
 var bot_jump_until := 0
@@ -55,6 +58,11 @@ var seen_event := 0
 var pickups: Array = []
 var pickup_timer := 0.0
 var chest_cycle := 0
+# Dedicated (headless) server mode: no local archer, automatic rounds.
+var dedicated := false
+var server_port := PORT
+var auto_start := AUTO_START_DELAY
+var auto_rematch := AUTO_REMATCH_DELAY
 
 func _ready() -> void:
 	Gamepad.configure_menu()
@@ -89,6 +97,9 @@ func _ready() -> void:
 	multiplayer.connection_failed.connect(func(): leave("Não foi possível conectar. Confira IP e porta UDP."))
 	multiplayer.server_disconnected.connect(func(): leave("O anfitrião encerrou a sala."))
 	var args := OS.get_cmdline_user_args()
+	if "--server" in args or OS.has_feature("dedicated_server"):
+		serve(args)
+		return
 	if "--host-test" in args:
 		host()
 	if "--join-test" in args:
@@ -162,6 +173,52 @@ func host() -> void:
 	ui.show_page("lobby")
 	status.text = "Sala aberta · 1/4 · UDP 24680. Compartilhe seu IP."
 
+# Headless dedicated server: no local archer, so the four seats stay open for
+# clients. Rounds start and rematch on their own; the host UI is never used.
+func serve(args: Array) -> void:
+	dedicated = true
+	for arg in args:
+		if arg.begins_with("--port="):
+			server_port = maxi(1, int(arg.trim_prefix("--port=")))
+		if arg.begins_with("--map="):
+			map_select.selected = clampi(int(arg.trim_prefix("--map=")), 0, MAPS.size() - 1)
+	leave("")
+	var peer := ENetMultiplayerPeer.new()
+	var error := peer.create_server(server_port, 4)
+	if error != OK:
+		push_error("Servidor: porta %d indisponível (%s)." % [server_port, error_string(error)])
+		get_tree().quit(1)
+		return
+	multiplayer.multiplayer_peer = peer
+	mode = "lobby"
+	auto_start = AUTO_START_DELAY
+	ui.show_page("lobby")
+	status.text = "Servidor dedicado · %s · UDP %d" % [MAPS[map_select.selected], server_port]
+	print("EMBERBOW_SERVER_READY port=%d map=%d" % [server_port, map_select.selected])
+
+func serve_flow(dt: float) -> void:
+	if mode == "lobby":
+		if players.size() >= 2:
+			auto_start -= dt
+			if auto_start <= 0:
+				auto_start = AUTO_START_DELAY
+				start_match()
+		else:
+			auto_start = AUTO_START_DELAY
+	elif mode == "playing":
+		auto_rematch = AUTO_REMATCH_DELAY
+	elif mode == "finished":
+		if players.size() < 2:
+			mode = "lobby"
+			auto_start = AUTO_START_DELAY
+			menu.show()
+			status.text = "Aguardando arqueiros para a próxima partida."
+			return
+		auto_rematch -= dt
+		if auto_rematch <= 0:
+			auto_rematch = AUTO_REMATCH_DELAY
+			start_match()
+
 func join() -> void:
 	var ip := address.text.strip_edges()
 	leave("")
@@ -204,7 +261,11 @@ func peer_joined(id: int) -> void:
 		(multiplayer.multiplayer_peer as ENetMultiplayerPeer).disconnect_peer(id)
 		return
 	spawn(id)
-	status.text = "Sala aberta · %d/4. Pronto para iniciar." % players.size()
+	if dedicated:
+		status.text = "Servidor dedicado · %d/4 conectados." % players.size()
+	else:
+		status.text = "Sala aberta · %d/4. Pronto para iniciar." % players.size()
+	print("EMBERBOW_PEER_JOIN id=%d players=%d" % [id, players.size()])
 	broadcast()
 
 func peer_left(id: int) -> void:
@@ -212,6 +273,7 @@ func peer_left(id: int) -> void:
 		players[id].free()
 		players.erase(id)
 	commands.erase(id)
+	print("EMBERBOW_PEER_LEFT id=%d players=%d" % [id, players.size()])
 	if multiplayer.is_server() and mode == "playing" and players.size() < 2:
 		mode = "lobby"
 		menu.show()
@@ -337,9 +399,11 @@ func _physics_process(dt: float) -> void:
 	camera.offset = Vector2(sin(tick * 2.3), cos(tick * 3.7)) * shake if screen_shake else Vector2.ZERO
 	for event in particle_events: event.life -= dt
 	particle_events = particle_events.filter(func(e): return e.life > 0)
+	if dedicated and multiplayer.is_server(): serve_flow(dt)
 	if mode == "playing":
 		var cmd: Dictionary = controls() if not menu.visible else {"x": 0.0, "aim": Vector2.ZERO, "bits": 0}
-		if multiplayer.is_server(): commands[1] = cmd
+		if multiplayer.is_server():
+			if not dedicated: commands[1] = cmd
 		else: input_command.rpc_id(1, cmd.x, cmd.aim, cmd.bits)
 	var local_paused := menu.visible and multiplayer.multiplayer_peer is OfflineMultiplayerPeer
 	hitstop = maxf(0, hitstop - dt)
