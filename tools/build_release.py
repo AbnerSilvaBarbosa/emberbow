@@ -8,7 +8,7 @@ import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'builds'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 
 def package(target, files):

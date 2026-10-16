@@ -78,7 +78,7 @@ Use o [guia de hospedagem](SERVER.md). O anfitrião abre **Jogar online → Cria
 
 Há dois caminhos para conseguir o `.exe`.
 
-**Pronto:** abra a página de **Releases** do repositório, baixe `Emberbow-Windows-0.1.0.zip`, extraia e dê dois cliques em `Emberbow.exe`. Os recursos vão embutidos no executável e as licenças acompanham o ZIP; quem joga não precisa instalar o Godot.
+**Pronto:** abra a página de **Releases** do repositório, baixe `Emberbow-Windows-0.2.0.zip`, extraia e dê dois cliques em `Emberbow.exe`. Os recursos vão embutidos no executável e as licenças acompanham o ZIP; quem joga não precisa instalar o Godot.
 
 **Você mesmo:** as etapas abaixo produzem a sua própria build. Quem receber a build não precisará instalar o Godot.
 
