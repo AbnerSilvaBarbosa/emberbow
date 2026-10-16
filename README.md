@@ -31,6 +31,11 @@ Demonstração roteirizada, renderizada pelo próprio Godot. Mostra entrada da r
 - Música e efeitos sonoros; trepidação de impacto pode ser desativada.
 - Controle com mira independente, navegação dos menus e detecção de conexão/desconexão.
 
+## Guias passo a passo
+
+- **[Instalar e jogar no Windows](docs/WINDOWS.md)** — download, importação, controles, execução e exportação para `.exe`.
+- **[Hospedar partidas e usar uma máquina remota](docs/SERVER.md)** — rede local, internet, firewall, porta UDP e situação do servidor dedicado.
+
 ## Instalar e executar
 
 ### Requisitos
