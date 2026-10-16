@@ -57,11 +57,15 @@ func draw_arena(c: CanvasItem, game: Node) -> void:
 	for pos in [Vector2(96, 100), Vector2(864, 100), Vector2(144, 460), Vector2(816, 460)]:
 		draw_torch(c, pos, t)
 	for item in game.pickups:
-		var color := Color("b89ef6") if item.kind == 1 else Color("ffbc71")
+		var color: Color = [Color.WHITE, Color("b89ef6"), Color("ffbc71"), Color("8cddff"), Color("e8e0fb")][item.kind]
 		var p: Vector2 = item.p
 		c.draw_circle(p, 21 + sin(t * 3) * 2, Color(color, 0.07))
 		c.draw_texture_rect(tex("chest_full_open_anim_f0"), Rect2(p - Vector2(16, 14), Vector2(32, 32)), false)
 		c.draw_rect(Rect2(p + Vector2(-3, -18 + sin(t * 4) * 2), Vector2(6, 6)), color)
+		if item.kind == 3:
+			c.draw_colored_polygon(PackedVector2Array([p + Vector2(-6, -27), p + Vector2(6, -27), p + Vector2(4, -20), p + Vector2(0, -16), p + Vector2(-4, -20)]), color)
+		elif item.kind == 4:
+			for side in [-1, 1]: c.draw_line(p + Vector2(0, -20), p + Vector2(side * 10, -28), color, 4)
 	for a in game.projectiles:
 		var direction: Vector2 = a.v.normalized()
 		var color := PAPER

@@ -4,7 +4,8 @@ const RUN_SPEED := 245.0
 const JUMP_SPEED := 495.0
 const GRAVITY := 980.0
 const DASH_SPEED := 570.0
-const DASH_TIME := 0.16
+const DASH_TIME := 0.28
+const SHORT_DASH_TIME := 0.10
 const DASH_COOLDOWN := 0.60
 var pid: int
 var slot: int
@@ -22,6 +23,10 @@ var death_age := 10.0
 var facing := 1.0
 var aim := Vector2.RIGHT
 var dash := 0.0
+var dash_elapsed := 0.0
+var shield := false
+var wings := false
+var air_jump_used := false
 var cooldown := 0.0
 var shoot_cd := 0.0
 var coyote := 0.0
@@ -53,7 +58,7 @@ func _ready() -> void:
 	shape.shape = box
 	add_child(shape)
 	collision_layer = 2
-	collision_mask = 1
+	collision_mask = 3
 	floor_snap_length = 3.0
 	z_index = 3
 
@@ -79,10 +84,16 @@ func simulate(dt: float, command: Dictionary) -> void:
 	invulnerable = maxf(0, invulnerable - dt)
 	wall_lock = maxf(0, wall_lock - dt)
 	if is_on_floor():
-		if velocity.y >= 0: jump_consumed = false
+		if velocity.y >= 0:
+			jump_consumed = false
+			air_jump_used = false
 		coyote = 0.10 if not jump_consumed else 0.0
 	else: coyote = maxf(0, coyote - dt)
 	jump_buffer = 0.12 if pressed & 1 else maxf(0, jump_buffer - dt)
+	var terrain_wall := false
+	for i in get_slide_collision_count():
+		var contact := get_slide_collision(i)
+		if absf(contact.get_normal().x) > 0.5 and contact.get_collider() is StaticBody2D: terrain_wall = true
 	var axis: float = command.get("x", 0.0)
 	var direction: Vector2 = command.get("aim", Vector2.ZERO)
 	if direction.length() > 0.1:
@@ -94,11 +105,14 @@ func simulate(dt: float, command: Dictionary) -> void:
 	if pressed & 2 and cooldown <= 0:
 		wall_grabbing = false
 		dash = DASH_TIME
+		dash_elapsed = 0
 		cooldown = DASH_COOLDOWN
 		charge = 0
 		velocity = (direction.normalized() if direction.length() > 0.1 else Vector2(facing, 0)) * DASH_SPEED
 		arena.effect(position, tint, "dash")
 	if dash > 0:
+		if not bits & 2: dash = minf(dash, maxf(0, SHORT_DASH_TIME - dash_elapsed))
+		dash_elapsed += dt
 		dash = maxf(0, dash - dt)
 		if dash == 0: velocity *= 0.5
 	else:
@@ -106,13 +120,14 @@ func simulate(dt: float, command: Dictionary) -> void:
 			var speed := RUN_SPEED * (0.62 if charge > 0 else 1.0)
 			velocity.x = move_toward(velocity.x, axis * speed, (2600 if is_on_floor() else 1600) * dt)
 		velocity.y = minf(velocity.y + GRAVITY * dt, 560)
-		wall_grabbing = is_on_wall() and not is_on_floor() and wall_lock <= 0 and axis * get_wall_normal().x < -0.1 and velocity.y >= 0
+		wall_grabbing = terrain_wall and not is_on_floor() and wall_lock <= 0 and axis * get_wall_normal().x < -0.1 and velocity.y >= 0
 		if wall_grabbing:
 			velocity.y = 0.0
-		if jump_buffer > 0 and (coyote > 0 or is_on_wall()):
+		if jump_buffer > 0 and (coyote > 0 or terrain_wall or (wings and not air_jump_used)):
+			if coyote <= 0 and not terrain_wall: air_jump_used = true
 			wall_grabbing = false
 			velocity.y = -JUMP_SPEED
-			if is_on_wall() and not is_on_floor():
+			if terrain_wall and not is_on_floor():
 				velocity.x = get_wall_normal().x * 310
 				wall_lock = 0.14
 			jump_buffer = 0
@@ -135,18 +150,29 @@ func simulate(dt: float, command: Dictionary) -> void:
 	var falling_speed := velocity.y
 	correct_corners(dt)
 	move_and_slide()
+	for i in get_slide_collision_count():
+		var contact := get_slide_collision(i)
+		var other = contact.get_collider()
+		if falling_speed > 90 and contact.get_normal().y < -0.5 and other is CharacterBody2D and other.alive and other.invulnerable <= 0 and other.dash <= 0:
+			arena.kill(other.pid, pid)
+			velocity.y = -280
 	if is_on_floor() and not was_grounded and falling_speed > 150:
 		squash = Vector2(1.2, 0.8)
 		arena.effect(position + Vector2(0, 13), Color("b7bfa6"), "land")
 	was_grounded = is_on_floor()
 	var old_x := position.x
 	position.x = wrapf(position.x, -12, 972)
-	if old_x != position.x: trail.clear()
+	if absf(old_x - position.x) > 900:
+		trail.clear()
+		visual_offset = Vector2.ZERO
+		reset_physics_interpolation()
 	if position.y > 612:
 		position.y = -12
+		visual_offset = Vector2.ZERO
 		trail.clear()
 	elif position.y < -12:
 		position.y = 612
+		visual_offset = Vector2.ZERO
 		trail.clear()
 	queue_redraw()
 
@@ -178,6 +204,7 @@ func correct_corners(dt: float) -> void:
 
 func begin_death() -> void:
 	death_age = 0
+	collision_layer = 0
 	charge = 0
 	trail.clear()
 	var local := arena.multiplayer.multiplayer_peer is OfflineMultiplayerPeer or pid == arena.multiplayer.get_unique_id()
@@ -196,6 +223,10 @@ func _draw() -> void:
 			draw_set_transform(Vector2.ZERO)
 			if t < 0.12: draw_circle(Vector2.ZERO, 18, Color(1, 0.95, 0.8, (1 - t / 0.12) * 0.65))
 		return
+	if shield: draw_arc(visual_offset, 24, 0, TAU, 24, Color(0.45, 0.85, 1, 0.75), 2)
+	if wings:
+		for side in [-1, 1]:
+			draw_colored_polygon(PackedVector2Array([visual_offset + Vector2(side * 8, -4), visual_offset + Vector2(side * 27, -19), visual_offset + Vector2(side * 22, 3)]), Color("e8e0fb"))
 	var art = arena.art
 	var moving := absf(velocity.x) > 20
 	var texture: Texture2D = art.sprite(skin, moving, anim_time)

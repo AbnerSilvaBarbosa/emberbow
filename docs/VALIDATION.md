@@ -38,3 +38,13 @@ Godot 4.5.1 Linux, headless, mesmos scripts do repositório.
 - **Build Windows** (preset `Windows`, x86_64, PCK embutido): exportada no Linux, 97 MB. O `.exe` **ainda não foi executado em um Windows real**, então "builds exportadas" sai da lista de não testados apenas quanto à exportação.
 - Regressão completa reexecutada nesta revisão: 165 verificações de mecânicas/controle/interface, `tests/network.py` (anfitrião jogador + três clientes) e `tests/dedicated.py`.
 - O servidor dedicado foi executado em uma VPS Linux (Ubuntu, headless) e recebeu dois clientes reais pelo `127.0.0.1` da própria VPS: partida iniciada automaticamente e movimento simulado no servidor. Jogadores em redes distintas, internet pública e a unidade systemd em operação contínua ainda não foram medidos.
+
+## Colisão, dash e poderes — 16/10/2026
+
+- 188 verificações de gameplay passaram: 165 existentes e 23 novas em `tests/powers_collision.gd`. Cobrem bloqueio andando e em dash, pisão com colisão física, toque versus dash segurado, salto extra, escudo, coleta de poderes, troca de arena por rodada e travessia horizontal nos 12 mapas.
+- Integração ENet com um host e três clientes em localhost passou, incluindo replicação de escudo e asas. Isso não mede latência real pela internet.
+- Captura `docs/chest-powers.png` gerada pela engine e inspecionada: escudo, asas e símbolos dos baús visíveis.
+- A transição pelas bordas limpa o deslocamento visual e preserva a altura. O relato de personagem deslocado para baixo não foi reproduzido manualmente; os testes cobrem essa passagem nos doze layouts.
+- Baús alternam duas categorias por leva; a rodada também muda o início do ciclo. Escudo absorve um golpe, asas concedem um salto aéreo por pouso; ambos são removidos na rodada seguinte.
+
+Após integrar as alterações remotas do servidor dedicado, fluxo de rodada (55) e novos poderes/colisões (23) foram revalidados. `tests/dedicated.py` passou com três clientes: início, movimento e rodada 2. No encerramento dos clientes, o servidor registrou três mensagens ENet `Unable to send packet on channel 0, max channels: 0`; o encerramento da conexão ainda merece revisão, embora as verificações da partida tenham passado. As builds distribuídas e a VPS não foram atualizadas nesta revisão de gameplay.

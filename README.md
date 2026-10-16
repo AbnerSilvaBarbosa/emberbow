@@ -23,11 +23,15 @@ Demonstração roteirizada, renderizada pelo próprio Godot. Mostra entrada da r
 - Um acerto elimina. Saltar sobre o adversário também elimina e rebate o atacante.
 - Pulo variável, buffer de pulo e tolerância curta após sair da plataforma.
 - Agarrar na parede, salto na parede e correção de quinas no pulo/dash.
-- Dash com captura de flechas, efeitos de impacto e recarga.
+- Jogadores se bloqueiam fisicamente, inclusive durante o dash.
+- Toque no dash para uma esquiva curta; segure para prolongar o deslocamento (até 0,28 s).
+- Dash captura flechas e tem recarga.
 - Flechas normais, perfurantes e explosivas no mesmo inventário.
+- Baús com escudo (absorve um acerto) e asas (um salto extra no ar, recarregado ao pousar).
 - Coleta automática de flechas do chão e das paredes.
 - Passagem entre bordas: sair por baixo leva ao topo, e sair pela direita leva à esquerda.
 - Contagem antes da rodada, saldo e total de pontos entre rodadas, avanço automático.
+- A arena muda a cada rodada, percorrendo os doze layouts a partir do escolhido.
 - Música e efeitos sonoros; trepidação de impacto pode ser desativada.
 - Controle com mira independente, navegação dos menus e detecção de conexão/desconexão.
 
@@ -133,7 +137,9 @@ Desconectar um controle abre o menu. No jogo local, isso pausa; online, os demai
 
 As flechas têm gravidade: o disparo perde altura ao longo do voo. Uma flecha atirada para cima pode cair sobre o próprio dono e eliminá-lo, descontando um ponto (mínimo zero). O dash ainda pode capturá-la.
 
-Capacidade máxima: **seis flechas**. A próxima fica sublinhada. Coleta e captura preservam o tipo; baús dão duas especiais. Encoste em uma flecha parada para recolhê-la, se houver espaço. Jogadores eliminados deixam a munição restante.
+![Escudo e asas em partida](docs/chest-powers.png)
+
+Capacidade máxima: **seis flechas**. A próxima fica sublinhada. Coleta e captura preservam o tipo; baús de flechas dão duas especiais. Outros baús concedem escudo ou asas até o fim da rodada. Encoste em uma flecha parada para recolhê-la, se houver espaço. Jogadores eliminados deixam a munição restante.
 
 ## Arenas
 
@@ -215,6 +221,7 @@ godot --headless --path . --script tests/corners.gd
 godot --headless --path . --script tests/replay_ballistics.gd
 godot --headless --path . --script tests/death_sequence.gd
 godot --headless --path . --script tests/gamepad.gd
+godot --headless --path . --script tests/powers_collision.gd
 godot --headless --path . --script tests/ui_click.gd
 python3 tests/network.py /caminho/para/godot
 python3 tests/dedicated.py /caminho/para/godot
@@ -228,7 +235,7 @@ Para gerar o cliente Windows e o servidor Linux, mais os pacotes de distribuiç�
 python3 tools/build_release.py --godot /caminho/para/godot
 ```
 
-**Validação registrada:** 165 verificações de mecânicas/controle, clique de interface, host + três clientes ENet em localhost e servidor dedicado + três clientes em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
+**Validação registrada:** 188 verificações de mecânicas/controle, clique de interface, host + três clientes ENet em localhost e servidor dedicado + três clientes em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
 
 Não validados: internet pública, perda/jitter, controles físicos, execução do `.exe` em um Windows real e balanceamento prolongado.
 

@@ -274,7 +274,7 @@ func build_help() -> void:
 	label(help, "WASD       Mover e mirar\nEspaço      Pular (segure para ir mais alto)\nJ / Mouse  Segure para mirar, solte para atirar\nK / Direito Dash e captura\nL / R         Detonar / trocar flecha", Vector2(58, 154), 18, TEXT)
 	label(help, "JOGADOR 2 / CONTROLE", Vector2(514, 116), 17, GOLD)
 	label(help, "Setas        Mover e mirar\nEnter        Pular\nShift         Segurar e soltar o tiro\nCtrl           Dash e captura\nBackspace Detonar  ·  . trocar flecha", Vector2(514, 154), 18, TEXT)
-	label(help, "Controle: analógico/D-pad move · direito mira · A pula · X/RT atira\nB/LB dash · Y detona · RB troca · Start pausa · A confirma nos menus.", Vector2(58, 307), 17, MUTED)
+	label(help, "Controle: analógico/D-pad move · direito mira · A pula · X/RT atira\nB/LB dash: toque curto / segure longo · Y detona · RB troca · Start pausa.", Vector2(58, 307), 17, MUTED)
 	label(help, "Local: 1 controle = P2; 2 controles = P1 e P2. Teclado continua disponível.", Vector2(58, 357), 15, MUTED)
 	button(help, "Voltar ao jogo" if game.mode == "playing" else "Voltar", Rect2(58, 388, 180, 34), func():
 		if game.mode == "playing": show_page("paused")
@@ -428,6 +428,10 @@ func draw_replay() -> void:
 				health.draw_texture_rect(game.art.sprite(p.skin, false, 0), Rect2(-16, -43, 32, 56), false, Color(1, 1, 1, 1 - t / 0.8))
 				health.draw_set_transform(Vector2.ZERO)
 				continue
+			if p.get("shield", false): health.draw_arc(p.p, 24, 0, TAU, 24, Color(0.45, 0.85, 1, 0.75), 2)
+			if p.get("wings", false):
+				for side in [-1, 1]:
+					health.draw_colored_polygon(PackedVector2Array([p.p + Vector2(side * 8, -4), p.p + Vector2(side * 27, -19), p.p + Vector2(side * 22, 3)]), Color("e8e0fb"))
 			health.draw_set_transform(p.p, 0, Vector2(p.facing, 1))
 			health.draw_texture_rect(game.art.sprite(p.skin, absf(p.v.x) > 20, frame.time), Rect2(-16, -43, 32, 56), false)
 			health.draw_set_transform(Vector2.ZERO)

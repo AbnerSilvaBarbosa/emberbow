@@ -36,6 +36,7 @@ func run() -> void:
 	p.simulate(1.0 / 60, {"bits": 2, "aim": Vector2.LEFT})
 	check(p.velocity.x > 0 and p.cooldown < recharge, "Dash cooldown prevents direction-reset spam")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	q.alive = false
 	p.position = Vector2(320, 507)
 	for i in 5:
@@ -50,6 +51,7 @@ func run() -> void:
 	check(p.velocity.y > short_velocity, "Re-pressing jump in air does not grant a second jump")
 	check(short_velocity >= -190, "Releasing jump cuts upward speed for a short hop")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	var before: float = game.round_time
 	game.toggle_pause()
 	game._physics_process(1.0 / 60)

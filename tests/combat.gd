@@ -27,6 +27,7 @@ func run() -> void:
 	for i in 10: game.update_arrows(1.0 / 60)
 	check(not q.alive and p.score == 1, "Arrow hit awards one elimination")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	p.position = Vector2(200, 480)
 	q.position = Vector2(300, 480)
 	q.invulnerable = 0
@@ -36,6 +37,7 @@ func run() -> void:
 	for i in 10: game.update_arrows(1.0 / 60)
 	check(q.alive and q.arrows == 3, "Dash captures projectile without damage")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	p.position = Vector2(300, 480)
 	q.position = Vector2(350, 480)
 	p.invulnerable = 0
@@ -45,6 +47,7 @@ func run() -> void:
 	game.detonate(1)
 	check(not q.alive and not p.alive, "Remote explosion damages opponents and owner")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	p.position = Vector2(300, 450)
 	q.position = Vector2(300, 475)
 	p.velocity.y = 200
@@ -52,6 +55,7 @@ func run() -> void:
 	game.stomps()
 	check(not q.alive and p.velocity.y < 0, "Stomp kills and bounces attacker")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	p.special = 1
 	p.position = Vector2(330, 331)
 	p.aim = Vector2.RIGHT
@@ -69,6 +73,7 @@ func run() -> void:
 	game.update_arrows(1.0 / 60)
 	check(p.arrows == 1 and game.projectiles.is_empty(), "Stuck arrow can be recovered")
 	game.reset_round()
+	preload("res://tests/fixture.gd").install(game)
 	p.position = Vector2(320, 507)
 	q.alive = false
 	for i in 5:

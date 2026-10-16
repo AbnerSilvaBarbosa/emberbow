@@ -296,6 +296,7 @@ func start_match() -> void:
 func reset_round() -> void:
 	replay_frames.clear()
 	round_number += 1
+	if round_number > 1: build_map((map_id + 1) % MAPS.size())
 	projectiles.clear()
 	pickups.clear()
 	pickup_timer = 4
@@ -305,6 +306,11 @@ func reset_round() -> void:
 	for p in players.values():
 		p.round_start_score = p.score
 		p.alive = true
+		p.collision_layer = 2
+		p.shield = false
+		p.wings = false
+		p.air_jump_used = false
+		p.dash_elapsed = 0
 		p.death_age = 10
 		p.arrows = 3
 		p.special = 0
@@ -446,7 +452,7 @@ func _physics_process(dt: float) -> void:
 func record_replay() -> void:
 	var actors: Array = []
 	for p in players.values():
-		actors.append({"p": p.position, "v": p.velocity, "alive": p.alive, "skin": p.skin, "facing": p.facing, "aim": p.aim, "tint": p.tint, "inventory": p.inventory.duplicate()})
+		actors.append({"p": p.position, "v": p.velocity, "alive": p.alive, "skin": p.skin, "facing": p.facing, "aim": p.aim, "tint": p.tint, "inventory": p.inventory.duplicate(), "shield": p.shield, "wings": p.wings})
 	replay_frames.append({"time": round_time, "actors": actors, "arrows": projectiles.duplicate(true), "effects": particle_events.duplicate(true)})
 	while replay_frames.size() > 1 and round_time - replay_frames[0].time > 1.5: replay_frames.pop_front()
 
@@ -544,17 +550,19 @@ func update_pickups(dt: float) -> void:
 	if pickup_timer <= 0:
 		pickup_timer = 8
 		if pickups.size() < 4:
-			var kind := 1 + chest_cycle % 2
 			for index in [2, 3]:
+				var kind: int = 1 + (chest_cycle * 2 + round_number - 1 + index - 2) % 4
 				var pos := spawn_point(index)
 				if not pickups.any(func(item): return item.p == pos): pickups.append({"p": pos, "kind": kind})
 			chest_cycle += 1
 	for item in pickups.duplicate():
 		for p in players.values():
 			if p.alive and p.position.distance_to(item.p) < 28:
-				p.collect_special(item.kind)
+				if item.kind == 3: p.shield = true
+				elif item.kind == 4: p.wings = true
+				else: p.collect_special(item.kind)
 				pickups.erase(item)
-				effect(item.p, p.tint, "catch", "PERFURANTE" if item.kind == 1 else "DETONÁVEL")
+				effect(item.p, p.tint, "catch", ["", "PERFURANTE", "EXPLOSIVA", "ESCUDO", "ASAS"][item.kind])
 				break
 
 func stomps() -> void:
@@ -570,6 +578,11 @@ func stomps() -> void:
 func kill(victim: int, attacker: int) -> void:
 	if not players.has(victim) or not players[victim].alive: return
 	var p: Node = players[victim]
+	if p.shield:
+		p.shield = false
+		p.invulnerable = 0.3
+		effect(p.position, Color("8cddff"), "catch", "ESCUDO!")
+		return
 	p.alive = false
 	p.begin_death()
 	sound("death")
@@ -596,7 +609,7 @@ func broadcast() -> void:
 	if multiplayer.get_peers().is_empty(): return
 	var state: Array = []
 	for p in players.values():
-		state.append({"id": p.pid, "slot": p.slot, "p": p.position, "v": p.velocity, "alive": p.alive, "arrows": p.arrows, "score": p.score, "round_start_score": p.round_start_score, "aim": p.aim, "dash": p.dash, "special": p.special, "skin": p.skin, "cooldown": p.cooldown, "charge": p.charge, "facing": p.facing, "invulnerable": p.invulnerable, "inventory": p.inventory.duplicate()})
+		state.append({"id": p.pid, "slot": p.slot, "p": p.position, "v": p.velocity, "alive": p.alive, "arrows": p.arrows, "score": p.score, "round_start_score": p.round_start_score, "aim": p.aim, "dash": p.dash, "special": p.special, "skin": p.skin, "cooldown": p.cooldown, "charge": p.charge, "facing": p.facing, "invulnerable": p.invulnerable, "inventory": p.inventory.duplicate(), "shield": p.shield, "wings": p.wings})
 	var visual_arrows: Array = []
 	for a in projectiles:
 		visual_arrows.append({"p": a.p, "v": a.v, "kind": a.kind, "stuck": a.stuck})
@@ -628,6 +641,9 @@ func snapshot(state: Array, arrows_state: Array, item_state: Array, phase: Strin
 		p.velocity = data.v
 		if p.alive and not data.alive: p.begin_death()
 		p.alive = data.alive
+		p.collision_layer = 2 if p.alive else 0
+		p.shield = data.get("shield", false)
+		p.wings = data.get("wings", false)
 		p.arrows = data.arrows
 		p.score = data.score
 		p.round_start_score = data.get("round_start_score", data.score)
