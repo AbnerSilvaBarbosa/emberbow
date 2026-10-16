@@ -28,3 +28,13 @@ Seis verificações adicionais passaram em `tests/replay_ballistics.gd`: subida/
 ## Impacto de morte e novos layouts
 
 Seis testes de `death_sequence.gd` passaram, cobrindo animação/impacto, permanência de dois sobreviventes mesmo após dez pontos, início apenas ao restar um, pausa final, rebobinada e reprodução lenta. Combate, balística e fluxo foram revalidados; quatro processos ENet passaram. Há doze layouts; spawns e passagens entre bordas testados em todos. Capturas de impacto/rebobinada/câmera lenta conferidas; intensidade de som e rumble requer playtest físico.
+
+## Servidor dedicado e builds exportadas — 16/10/2026
+
+Godot 4.5.1 Linux, headless, mesmos scripts do repositório.
+
+- **Servidor dedicado:** um processo com `--server` e **três clientes ENet reais** em localhost (`tests/dedicated.py`, código de saída 0). Verificado: abertura da porta, três conexões aceitas, início automático da partida sem nenhuma ação de interface, movimento dos clientes simulado no servidor e rotação para a rodada 2 depois que a rodada terminou.
+- **Build Linux Server** (preset `Linux Server`, PCK embutido): o binário exportado abriu UDP 24680 e recebeu dois clientes, que reportaram início automático e movimento — mesma verificação do pacote distribuído, não só do projeto no editor.
+- **Build Windows** (preset `Windows`, x86_64, PCK embutido): exportada no Linux, 97 MB. O `.exe` **ainda não foi executado em um Windows real**, então "builds exportadas" sai da lista de não testados apenas quanto à exportação.
+- Regressão completa reexecutada nesta revisão: 165 verificações de mecânicas/controle/interface, `tests/network.py` (anfitrião jogador + três clientes) e `tests/dedicated.py`.
+- O servidor dedicado foi executado em uma VPS Linux (Ubuntu, headless) e recebeu dois clientes reais pelo `127.0.0.1` da própria VPS: partida iniciada automaticamente e movimento simulado no servidor. Jogadores em redes distintas, internet pública e a unidade systemd em operação contínua ainda não foram medidos.

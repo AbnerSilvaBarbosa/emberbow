@@ -8,7 +8,7 @@ Type=simple
 User=emberbow
 Group=emberbow
 WorkingDirectory=/opt/emberbow/current
-ExecStart=/opt/emberbow/current/emberbow-server --headless -- --server --port=24680 --map=0
+ExecStart=/usr/bin/stdbuf -oL /opt/emberbow/current/emberbow-server --headless -- --server --port=24680 --map=0
 Restart=on-failure
 RestartSec=3
 StateDirectory=emberbow

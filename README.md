@@ -54,7 +54,9 @@ No gerenciador do Godot, também é possível escolher **Importar**, selecionar 
 
 **macOS:** `Jogar.command` procura o Godot em `/Applications/Godot.app` ou `.tools/Godot.app`. O motor não é incluído no repositório. Se o executável estiver em outro local, importe o projeto pelo editor.
 
-**Windows/Linux:** importe o projeto no editor do Godot. Não há builds exportadas nem validação física nessas plataformas nesta versão.
+**Windows:** baixe o `Emberbow.exe` da página de **Releases** e dê dois cliques — não é preciso instalar o Godot. Guia completo em [Instalar e jogar no Windows](docs/WINDOWS.md).
+
+**Linux:** abra o projeto pelo editor. Para um servidor sem interface, use o preset **Linux Server** descrito em [Hospedar partidas](docs/SERVER.md).
 
 ## Modos de jogo
 
@@ -62,7 +64,7 @@ No gerenciador do Godot, também é possível escolher **Importar**, selecionar 
 |---|---:|---|
 | Treino | Você + bot | Escolha **Treinar contra bot** |
 | Duelo local | 2 no mesmo computador | Escolha **Duelo no mesmo computador** |
-| Online | 2–4 | Um jogador cria a sala; os demais entram pelo IP |
+| Online | 2–4 | Um jogador cria a sala ou um servidor dedicado (`--server`) recebe os quatro |
 
 Selecione o arqueiro e a arena no menu antes de começar.
 
@@ -173,6 +175,8 @@ O desenho e a colisão compartilham uma grade de 24 px. Pedra com contorno claro
 
 A rede usa **ENet com host autoritativo**, comandos a 60 Hz e snapshots a 30 Hz, com suavização visual. Ainda não há rollback, predição, servidor público, códigos de convite ou travessia automática de NAT. Latência alta afeta a resposta dos convidados. Não aceitamos entrada de novos jogadores durante uma partida.
 
+Para um servidor sem ninguém jogando como anfitrião, rode uma build com `--server`: ela não cria personagem local, mantém as quatro vagas abertas e inicia as partidas sozinha. Veja [hospedar partidas](docs/SERVER.md#opção-3--servidor-dedicado-headless).
+
 ![Tela de conexão](docs/online.png)
 
 ## Desenvolvimento e testes
@@ -213,11 +217,20 @@ godot --headless --path . --script tests/death_sequence.gd
 godot --headless --path . --script tests/gamepad.gd
 godot --headless --path . --script tests/ui_click.gd
 python3 tests/network.py /caminho/para/godot
+python3 tests/dedicated.py /caminho/para/godot
 ```
 
-**Validação registrada:** 165 verificações de mecânicas/controle, clique de interface e host + três clientes ENet em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
+`tests/network.py` sobe um anfitrião jogador com três clientes. `tests/dedicated.py` sobe um servidor dedicado com três clientes e verifica o início automático da partida, a simulação das entradas no servidor e a rotação de rodada.
 
-Não validados: internet pública, perda/jitter, controles físicos, builds exportadas e balanceamento prolongado.
+Para gerar o cliente Windows e o servidor Linux, mais os pacotes de distribuição em `builds/`:
+
+```sh
+python3 tools/build_release.py --godot /caminho/para/godot
+```
+
+**Validação registrada:** 165 verificações de mecânicas/controle, clique de interface, host + três clientes ENet em localhost e servidor dedicado + três clientes em localhost. Veja [resultados e limitações](docs/VALIDATION.md).
+
+Não validados: internet pública, perda/jitter, controles físicos, execução do `.exe` em um Windows real e balanceamento prolongado.
 
 ### Reproduzir as mídias
 

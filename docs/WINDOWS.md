@@ -1,6 +1,6 @@
 # Instalar e jogar no Windows
 
-Este guia usa o código-fonte do Emberbow e o Godot 4.5.1 padrão. Não há instalador Windows pronto nesta versão. O projeto foi validado no macOS; a execução física no Windows ainda precisa de teste.
+Este guia usa o código-fonte do Emberbow e o Godot 4.5.1 padrão. Se você só quer jogar, pule para a seção 6 e baixe o `Emberbow.exe` da página de Releases. O projeto foi validado no macOS e exportado no Linux; a execução física no Windows ainda precisa de teste.
 
 ## 1. Baixar o jogo
 
@@ -74,9 +74,13 @@ O reconhecimento depende do mapeamento oferecido pelo Godot/SDL. Botões e vibra
 
 Use o [guia de hospedagem](SERVER.md). O anfitrião abre **Jogar online → Criar sala**, compartilha seu IP e inicia quando os convidados entrarem. O jogo usa **UDP 24680**.
 
-## 6. Gerar um executável para distribuir
+## 6. Baixar ou gerar um executável
 
-Esta etapa é para quem quer produzir uma build. As pessoas que receberem a build não precisarão instalar o Godot.
+Há dois caminhos para conseguir o `.exe`.
+
+**Pronto:** abra a página de **Releases** do repositório, baixe `Emberbow-Windows-0.1.0.zip`, extraia e dê dois cliques em `Emberbow.exe`. Os recursos vão embutidos no executável e as licenças acompanham o ZIP; quem joga não precisa instalar o Godot.
+
+**Você mesmo:** as etapas abaixo produzem a sua própria build. Quem receber a build não precisará instalar o Godot.
 
 1. Abra o projeto no Godot 4.5.1.
 2. Abra **Editor → Manage Export Templates / Gerenciar modelos de exportação**.
@@ -88,7 +92,7 @@ Esta etapa é para quem quer produzir uma build. As pessoas que receberem a buil
 8. Inclua os créditos e licenças de `assets/licenses/` na distribuição.
 9. Teste o executável exportado em outro PC Windows antes de distribuir o ZIP.
 
-Não há preset Windows versionado nem build assinada neste repositório. O guia descreve a exportação pelo editor; ele não confirma que uma build Windows foi gerada/testada.
+O repositório versiona o preset Windows em `export_presets.cfg` (x86_64, PCK embutido) e `tools/build_release.py` roda a exportação e empacota o ZIP. Ainda não há build assinada.
 
 ## Problemas comuns
 
