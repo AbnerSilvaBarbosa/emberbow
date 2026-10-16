@@ -1,8 +1,8 @@
 # Builds do Emberbow
 
-Esta branch existe só para deixar o pacote pronto a um clique enquanto o
-repositório não tem uma Release publicada. O código continua na `main` — aqui
-não há fonte, só o arquivo gerado por `tools/build_release.py` na mesma revisão.
+Esta branch é uma cópia da `main` mais o pacote pronto, para download direto
+enquanto o repositório não tem uma Release publicada. O arquivo é gerado por
+`tools/build_release.py` na mesma revisão.
 
 ## Windows
 
